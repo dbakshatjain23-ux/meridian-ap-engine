@@ -1,0 +1,85 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Test coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Docker
+.docker/
+
+# Local development overrides
+docker-compose.override.yml
+
+# Secrets (never commit)
+*.pem
+*.key
+*.crt
+secrets/
+.env.secrets
+
+# ML Models cache
+/models/
+__pycache__/
+*.pt
+*.bin
+
+# Data files
+*.parquet
+*.feather
+data/raw/
+data/processed/
+
+# IDE specific
+.vscode/settings.json
+.idea/workspace.xml
+
+# Temporary files
+tmp/
+temp/
+*.tmp

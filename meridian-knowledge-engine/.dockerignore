@@ -1,0 +1,85 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Test artifacts
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# ML Models
+/models/
+*.pt
+*.bin
+
+# Data
+*.parquet
+*.feather
+data/
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# Secrets
+*.pem
+*.key
+*.crt
+secrets/
+.env.secrets
+
+# Documentation (except specs)
+docs/*.pdf
+docs/*.docx
+docs/Meeting*
+docs/How*
+
+# Keep specs
+!docs/Meridian_AP_*.md
+!docs/PS-07*.md

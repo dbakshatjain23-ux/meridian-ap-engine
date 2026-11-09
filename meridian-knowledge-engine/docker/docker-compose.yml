@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: meridian
+      POSTGRES_USER: meridian
+      POSTGRES_PASSWORD: meridian
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meridian"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql://meridian:meridian@postgres:5432/meridian
+      REDIS_URL: redis://redis:6379
+      APP_ENV: development
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      JWT_SECRET_KEY: dev-secret-change-in-production-min-64-chars
+      DEFAULT_TENANT_SLUG: meridian
+      EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
+      RERANKER_MODEL: BAAI/bge-reranker-base
+      LOG_LEVEL: debug
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    environment:
+      DATABASE_URL: postgresql://meridian:meridian@postgres:5432/meridian
+      REDIS_URL: redis://redis:6379
+      APP_ENV: development
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      DEFAULT_TENANT_SLUG: meridian
+      EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
+      RERANKER_MODEL: BAAI/bge-reranker-base
+      WORKER_CONCURRENCY: 2
+      LOG_LEVEL: debug
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python -m app.workers.main
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports: ["3000:3000"]
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/v1
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000/v1
+      NEXT_PUBLIC_TENANT_SLUG: meridian
+    volumes:
+      - ./web/src:/app/src
+      - ./web/package.json:/app/package.json
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:
