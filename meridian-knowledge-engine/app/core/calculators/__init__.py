@@ -7,6 +7,17 @@ from app.core.calculators.msme_due_date import MSMEDueDateCalculator
 from app.core.calculators.e_invoice import EInvoiceValidator
 from app.core.calculators.supplier_normalizer import SupplierNormalizer
 
+# Register all calculators
+CALCULATORS.update({
+    "calculate_price_variance": PriceVarianceCalculator(),
+    "classify_tds": TDSClassifier(),
+    "calculate_tds": TDSCalculator(),
+    "calculate_msme_due_date": MSMEDueDateCalculator(),
+    "validate_e_invoice_requirement": EInvoiceValidator(),
+    "normalize_supplier_string": SupplierNormalizer(),
+})
+
+
 __all__ = [
     "BaseCalculator",
     "CalculatorContext",
@@ -21,7 +32,7 @@ __all__ = [
 ]
 
 
-def get_calculator(name: str) -> BaseCalculator:
+def get_calculator(name: str):
     calc = CALCULATORS.get(name)
     if not calc:
         raise ValueError(f"Unknown calculator: {name}")

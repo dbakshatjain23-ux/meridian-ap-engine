@@ -2,7 +2,7 @@
 """Job model - Background worker queue (Postgres SKIP LOCKED)."""
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import DateTime, String, Text, ForeignKey, Index, Integer, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column

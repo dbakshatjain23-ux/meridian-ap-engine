@@ -2,7 +2,7 @@
 """Episode model - Raw inputs: documents, emails, meetings, chats, uploads."""
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Dict, Any
 from sqlalchemy import DateTime, String, Text, ForeignKey, Index, func, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -41,7 +41,7 @@ class Episode(Base):
         # 'document' | 'email' | 'meeting' | 'chat' | 'upload'
     )
     source_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    source_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    source_metadata: Mapped[str] = mapped_column(Text, nullable=False)
     raw_content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[str] = mapped_column(

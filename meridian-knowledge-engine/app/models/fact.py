@@ -2,11 +2,11 @@
 """Fact model - Core knowledge: Dual-clock temporal edges."""
 import uuid
 from datetime import date, datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import (
     DateTime, Date, String, Text, ForeignKey, Index, ARRAY, func, Integer, Float, Enum as SQLEnum
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB, TSRANGE, DATERANGE, GIST
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -38,14 +38,16 @@ class Fact(Base):
         Index(
             "ix_facts_valid_range",
             "tenant_id",
-            DATERANGE("valid_from", "valid_to", "[]"),
+            "valid_from",
+            "valid_to",
             postgresql_using="gist",
         ),
         # GiST Range Index for Transaction Time Queries
         Index(
             "ix_facts_txn_range",
             "tenant_id",
-            TSRANGE("recorded_at", "retracted_at", "[]"),
+            "recorded_at",
+            "retracted_at",
             postgresql_using="gist",
         ),
         {"schema": "public"},
@@ -64,12 +66,12 @@ class Fact(Base):
     )
     subject_entity_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("entities.id", ondelete="CASCADE"),
+        ForeignKey("public.entities.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     predicate: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    object_value: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    object_value = mapped_column(Text, nullable=False)
     object_type: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
@@ -91,10 +93,10 @@ class Fact(Base):
     # SOURCE & AUTHORITY
     source_episode_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("episodes.id", ondelete="SET NULL"),
+        ForeignKey("public.episodes.id", ondelete="SET NULL"),
         nullable=True,
     )
-    source_block_ids: Mapped[List[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list, nullable=False)
+    source_block_ids = mapped_column(Text, nullable=False)
     source_type: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
@@ -128,13 +130,13 @@ class Fact(Base):
     # Relationships
     subject_entity: Mapped["Entity"] = relationship("Entity", back_populates="facts_as_subject", lazy="selectin")
     source_episode: Mapped[Optional["Episode"]] = relationship("Episode", back_populates="facts", lazy="selectin")
-    conflicts_as_fact1: Mapped[list["Conflict"]] = relationship(
+    conflicts_as_fact1: Mapped["list[Conflict]"] = relationship(
         "Conflict",
         foreign_keys="Conflict.fact_id_1",
         back_populates="fact_1",
         lazy="selectin",
     )
-    conflicts_as_fact2: Mapped[list["Conflict"]] = relationship(
+    conflicts_as_fact2: Mapped["list[Conflict]"] = relationship(
         "Conflict",
         foreign_keys="Conflict.fact_id_2",
         back_populates="fact_2",

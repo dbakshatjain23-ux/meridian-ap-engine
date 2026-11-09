@@ -1,7 +1,8 @@
 # app/models/answer_log.py
 """AnswerLog model - Audit trail for every query."""
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+from typing import Optional
 from sqlalchemy import DateTime, String, Text, ForeignKey, Index, Integer, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column

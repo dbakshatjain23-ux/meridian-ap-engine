@@ -2,9 +2,10 @@
 """Block model - Parsed structural units: sections, table rows, transcript turns, slides."""
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import DateTime, String, Text, ForeignKey, Index, ARRAY, func
-from sqlalchemy.dialects.postgresql import UUID, JSONB, VECTOR
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -31,7 +32,7 @@ class Block(Base):
     )
     episode_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("episodes.id", ondelete="CASCADE"),
+        ForeignKey("public.episodes.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -52,7 +53,7 @@ class Block(Base):
     metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     char_start: Mapped[Optional[int]] = mapped_column(nullable=True)
     char_end: Mapped[Optional[int]] = mapped_column(nullable=True)
-    embedding: Mapped[Optional[List[float]]] = mapped_column(VECTOR(384), nullable=True)
+    embedding: Mapped[Optional[List[float]]] = mapped_column(Vector(384), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

@@ -21,9 +21,18 @@ class SupplierNormalizer(BaseCalculator):
         s = invoice_num_str.upper().strip()
         # Remove trailing resubmission suffixes
         s = re.sub(r'(/A|-REV|-A|/REV)$', '', s)
-        # Remove punctuation, spaces, leading zeros
+        # Remove punctuation, spaces
         s = re.sub(r'[^A-Z0-9]', '', s)
-        s = s.lstrip('0')
+        # Strip leading zeros from each numeric segment
+        # Split into alphabetic and numeric parts, strip leading zeros from numeric parts
+        parts = re.split(r'(\d+)', s)
+        normalized_parts = []
+        for part in parts:
+            if part.isdigit():
+                # Strip leading zeros from numeric parts
+                part = part.lstrip('0') or '0'
+            normalized_parts.append(part)
+        s = ''.join(normalized_parts)
 
         return {
             "normalized": s,
