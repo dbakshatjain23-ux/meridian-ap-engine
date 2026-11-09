@@ -44,11 +44,11 @@ class Settings(BaseSettings):
     JWT_REFRESH_EXPIRY_DAYS: int = 7
 
     # ============================================================
-    # LLM PROVIDER (Anthropic Only)
+    # LLM PROVIDER (OpenAI - GPT-4o-mini + GPT-4o)
     # ============================================================
-    ANTHROPIC_API_KEY: str = Field(..., description="Anthropic API key")
-    CLAUDE_HAIKU_MODEL: str = "claude-3-5-haiku-20241022"
-    CLAUDE_SONNET_MODEL: str = "claude-3-5-sonnet-20241022"
+    OPENAI_API_KEY: str = Field(..., description="OpenAI API key")
+    OPENAI_MODEL_FAST: str = "gpt-4o-mini"      # Cheap, fast: triage, routing, structure repair, schema learning
+    OPENAI_MODEL_STRONG: str = "gpt-4o"         # Strong reasoning: extraction, answer, verification
     LLM_CACHE_TTL_SECONDS: int = 3600
     LLM_MAX_RETRIES: int = 3
 

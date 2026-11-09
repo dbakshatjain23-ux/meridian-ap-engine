@@ -70,10 +70,10 @@ Over a six-month evaluation period (April – September 2026), the floor process
 * **Lane 2 · Lookup Lane (28% / 526 Pings)**: Delivers cited retrieval scoped strictly by client desk (`Arvana Infra / Pharma / Retail`) and invoice `as_of_date`. Hybrid search: Keyword + Vector + Graph Walk → RRF Merge → Rerank → Top-6 passages.
 * **Lane 3 · Judgment / Tacit Lane (18% / 349 Pings)**: Executes pre-calculation triage via `classify_tds`. Ambiguous contracts return **`TDS_SECTION_UNCLEAR`** to Tax Lead Imran Qureshi. Approved expert practice cards (Fact status=approved, authority_rank=3) displayed **side-by-side** with written rules.
 
-### 4.2 Functional Requirement 2: Single-Provider LLM Gateway (Anthropic Claude)
-* **Two-Model Tiering**: `claude-3-5-haiku` for triage, routing, structure repair, schema learning (cheap, fast). `claude-3-5-sonnet` for extraction, answer generation, verification (strong reasoning).
+### 4.2 Functional Requirement 2: Single-Provider LLM Gateway (OpenAI)
+* **Two-Model Tiering**: `gpt-4o-mini` for triage, routing, structure repair, schema learning (cheap, fast). `gpt-4o` for extraction, answer generation, verification (strong reasoning).
 * **One Gateway**: All model calls routed through `LLMGateway` class — hides PII, logs calls, caches results for reproducibility.
-* **No Multi-Provider Abstraction**: Removes complexity; Claude + local embeddings covers all needs.
+* **No Multi-Provider Abstraction**: Removes complexity; OpenAI + local embeddings covers all needs.
 
 ### 4.3 Functional Requirement 3: Dual-Clock Temporal Knowledge Graph (Postgres Native)
 * Knowledge stored as **Facts** with **two clocks**:

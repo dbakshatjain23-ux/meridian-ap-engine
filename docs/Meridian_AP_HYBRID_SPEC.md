@@ -523,9 +523,9 @@ CALCULATORS = {
 DEFAULT_TENANT_SLUG=meridian
 
 # AI Models
-ANTHROPIC_API_KEY=sk-ant-...
-CLAUDE_HAIKU_MODEL=claude-3-5-haiku-20241022
-CLAUDE_SONNET_MODEL=claude-3-5-sonnet-20241022
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL_FAST=gpt-4o-mini      # Cheap, fast: triage, routing, structure repair, schema learning
+OPENAI_MODEL_STRONG=gpt-4o         # Strong reasoning: extraction, answer, verification
 
 # Database
 DATABASE_URL=postgresql://user:pass@host:5432/dbname

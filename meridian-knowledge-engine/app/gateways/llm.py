@@ -1,11 +1,11 @@
 # app/gateways/llm.py
-"""LLM Gateway - Anthropic Claude Only (Haiku + Sonnet Tiering)."""
+"""LLM Gateway - OpenAI (GPT-4o-mini + GPT-4o Tiering)."""
 import hashlib
 import json
 import time
 from typing import Optional
 from dataclasses import dataclass
-from anthropic import AsyncAnthropic
+from openai import AsyncOpenAI
 from app.config import get_settings
 
 settings = get_settings()
@@ -88,27 +88,28 @@ class CallLogger:
 
 class LLMGateway:
     """
-    Single gateway for all Anthropic Claude calls.
-    Two-model tiering: Haiku for cheap/fast, Sonnet for strong reasoning.
+    Single gateway for all OpenAI calls.
+    Two-model tiering:
+    - GPT-4o-mini (fast/cheap): triage, routing, structure repair, schema learning, classification
+    - GPT-4o (strong): extraction, answer generation, verification
     """
 
-    HAIKU_TASKS = {
+    FAST_TASKS = {
         "triage", "routing", "structure_repair", "schema_learning",
         "classification", "simple_extraction", "entity_extraction",
     }
 
     def __init__(self):
-        self.haiku = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
-        self.sonnet = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         self.pii_redactor = PIIRedactor()
         self.call_logger = CallLogger()
         self.cache = LRUCache()
 
-    def _route_model(self, task_type: str) -> tuple[AsyncAnthropic, str]:
-        """Route to appropriate model tier."""
-        if task_type in self.HAIKU_TASKS:
-            return self.haiku, settings.CLAUDE_HAIKU_MODEL
-        return self.sonnet, settings.CLAUDE_SONNET_MODEL
+    def _route_model(self, task_type: str) -> tuple[str, str]:
+        """Route to appropriate model tier. Returns (model_name, display_name)."""
+        if task_type in self.FAST_TASKS:
+            return settings.OPENAI_MODEL_FAST, "gpt-4o-mini"
+        return settings.OPENAI_MODEL_STRONG, "gpt-4o"
 
     async def complete(
         self,
@@ -128,31 +129,31 @@ class LLMGateway:
         clean_system = self.pii_redactor.redact(system) if system else None
 
         # 2. Check cache
-        cache_key = self.cache._make_key(
-            task_type, clean_prompt, clean_system, temperature
-        )
+        model_name, _ = self._route_model(task_type)
+        cache_key = self.cache._make_key(model_name, clean_prompt, clean_system, temperature)
         if cached := self.cache.get(cache_key):
             self.call_logger.log(task_type, clean_prompt, cached.content, cached.model, True, int((time.time() - start_time) * 1000))
             return cached.content
 
-        # 3. Route to model
-        client, model = self._route_model(task_type)
+        # 3. Call model
+        messages = []
+        if clean_system:
+            messages.append({"role": "system", "content": clean_system})
+        messages.append({"role": "user", "content": clean_prompt})
 
-        # 4. Call with retries
         last_error = None
         for attempt in range(settings.LLM_MAX_RETRIES):
             try:
-                response = await client.messages.create(
-                    model=model,
-                    max_tokens=max_tokens,
+                response = await self.client.chat.completions.create(
+                    model=model_name,
+                    messages=messages,
                     temperature=temperature,
-                    system=clean_system,
-                    messages=[{"role": "user", "content": clean_prompt}],
+                    max_tokens=max_tokens,
                 )
-                content = response.content[0].text if response.content else ""
+                content = response.choices[0].message.content if response.choices else ""
                 usage = {
-                    "input_tokens": response.usage.input_tokens,
-                    "output_tokens": response.usage.output_tokens,
+                    "input_tokens": response.usage.prompt_tokens,
+                    "output_tokens": response.usage.completion_tokens,
                 }
                 break
             except Exception as e:
@@ -164,10 +165,10 @@ class LLMGateway:
 
         latency_ms = int((time.time() - start_time) * 1000)
 
-        # 5. Cache and log
-        llm_response = LLMResponse(content=content, model=model, usage=usage)
+        # 4. Cache and log
+        llm_response = LLMResponse(content=content, model=model_name, usage=usage)
         self.cache.set(cache_key, llm_response)
-        self.call_logger.log(task_type, clean_prompt, content, model, False, latency_ms)
+        self.call_logger.log(task_type, clean_prompt, content, model_name, False, latency_ms)
 
         return content
 

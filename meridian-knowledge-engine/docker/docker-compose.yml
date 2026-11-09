@@ -36,7 +36,7 @@ services:
       DATABASE_URL: postgresql://meridian:meridian@postgres:5432/meridian
       REDIS_URL: redis://redis:6379
       APP_ENV: development
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
       JWT_SECRET_KEY: dev-secret-change-in-production-min-64-chars
       DEFAULT_TENANT_SLUG: meridian
       EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
@@ -59,7 +59,7 @@ services:
       DATABASE_URL: postgresql://meridian:meridian@postgres:5432/meridian
       REDIS_URL: redis://redis:6379
       APP_ENV: development
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
       DEFAULT_TENANT_SLUG: meridian
       EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
       RERANKER_MODEL: BAAI/bge-reranker-base

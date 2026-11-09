@@ -27,7 +27,7 @@
 │                    │         Shared Services             │                         │
 │                    │  • Redis (caching, rate limits)     │                         │
 │                    │  • S3/R2 (file storage, uploads)    │                         │
-│                    │  • Anthropic API (Claude)           │                         │
+│                    │  • OpenAI API (GPT-4o-mini + GPT-4o)           │                         │
 │                    │  • Microsoft Graph API (connectors) │                         │
 │                    └─────────────────────────────────────┘                         │
 │                                                                                     │
@@ -46,7 +46,7 @@
 | **Database** | Neon | Postgres 16, pgvector, pg_trgm, btree_gist | Temporal Graph, Vectors, Full-Text, Jobs |
 | **Cache/Rate Limit** | Redis (Upstash) | Serverless Redis | LLM Cache, Rate Limiting, Session |
 | **File Storage** | Cloudflare R2 | S3-compatible | Episode files, Generated Redlines |
-| **LLM** | Anthropic | Claude Haiku + Sonnet | All AI Tasks (Tiered) |
+| **LLM** | OpenAI | GPT-4o-mini + GPT-4o | All AI Tasks (Tiered) |
 | **Embeddings** | Local (CPU) | BGE-small-en-v1.5 | Vector Embeddings (No API Cost) |
 | **Reranker** | Local (CPU) | BGE-reranker-base | Hybrid Search Reranking |
 | **Transcription** | Local (GPU) | faster-whisper | Meeting Transcription |
@@ -89,11 +89,11 @@ JWT_EXPIRY_MINUTES=60
 JWT_REFRESH_EXPIRY_DAYS=7
 
 # ============================================================
-# LLM PROVIDER (Anthropic Only)
+# LLM PROVIDER (OpenAI - GPT-4o-mini + GPT-4o)
 # ============================================================
-ANTHROPIC_API_KEY=sk-ant-...
-CLAUDE_HAIKU_MODEL=claude-3-5-haiku-20241022
-CLAUDE_SONNET_MODEL=claude-3-5-sonnet-20241022
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL_FAST=gpt-4o-mini      # Cheap, fast: triage, routing, structure repair, schema learning
+OPENAI_MODEL_STRONG=gpt-4o         # Strong reasoning: extraction, answer, verification
 LLM_CACHE_TTL_SECONDS=3600
 LLM_MAX_RETRIES=3
 
@@ -283,7 +283,7 @@ pgvector==0.2.5
 psycopg[pool]==3.1.18
 
 # AI/ML
-anthropic==0.39.0
+openai==1.30.0
 sentence-transformers==3.0.1
 torch==2.4.0 --index-url https://download.pytorch.org/whl/cpu
 transformers==4.42.0
@@ -377,7 +377,7 @@ services:
       - key: REDIS_URL
         fromService: meridian-redis
         property: connectionString
-      - key: ANTHROPIC_API_KEY
+      - key: OPENAI_API_KEY
         sync: false
       - key: JWT_SECRET_KEY
         sync: false

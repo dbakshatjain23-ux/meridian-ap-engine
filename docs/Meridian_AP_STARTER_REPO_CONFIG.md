@@ -352,9 +352,9 @@ pgvector==0.2.5
 psycopg[pool]==3.1.18
 
 # ============================================================
-# AI / LLM (Anthropic Only)
+# AI / LLM (OpenAI - GPT-4o-mini + GPT-4o)
 # ============================================================
-anthropic==0.39.0
+openai==1.30.0
 
 # ============================================================
 # EMBEDDINGS & RERANKING (Local CPU)
@@ -450,11 +450,11 @@ JWT_EXPIRY_MINUTES=60
 JWT_REFRESH_EXPIRY_DAYS=7
 
 # ============================================================
-# LLM PROVIDER (Anthropic Only)
+# LLM PROVIDER (OpenAI - GPT-4o-mini + GPT-4o)
 # ============================================================
-ANTHROPIC_API_KEY=sk-ant-...
-CLAUDE_HAIKU_MODEL=claude-3-5-haiku-20241022
-CLAUDE_SONNET_MODEL=claude-3-5-sonnet-20241022
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL_FAST=gpt-4o-mini      # Cheap, fast: triage, routing, structure repair, schema learning
+OPENAI_MODEL_STRONG=gpt-4o         # Strong reasoning: extraction, answer, verification
 LLM_CACHE_TTL_SECONDS=3600
 LLM_MAX_RETRIES=3
 
@@ -557,7 +557,7 @@ cd meridian-knowledge-engine
 
 # 2. Copy env template
 cp .env.example .env.local
-# Edit .env.local with your keys (ANTHROPIC_API_KEY required)
+# Edit .env.local with your keys (OPENAI_API_KEY required)
 
 # 3. Start local stack
 docker-compose up -d

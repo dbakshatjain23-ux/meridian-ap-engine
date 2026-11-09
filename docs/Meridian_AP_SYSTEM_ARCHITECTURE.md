@@ -67,31 +67,41 @@ The solution treats organizational knowledge management as a **Governed Dual-Clo
 ```python
 # app/gateways/llm.py
 class LLMGateway:
-    """Single gateway for all Anthropic Claude calls."""
+    """Single gateway for all OpenAI calls."""
     
     def __init__(self):
-        self.haiku = Anthropic(model="claude-3-5-haiku-20241022")   # Cheap, fast
-        self.sonnet = Anthropic(model="claude-3-5-sonnet-20241022") # Strong reasoning
+        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         self.pii_redactor = PIIRedactor()
-        self.call_log = CallLogger()
+        self.call_logger = CallLogger()
         self.cache = LRUCache(maxsize=10000)
     
-    def route(self, task_type: str) -> Anthropic:
+    def _route_model(self, task_type: str) -> str:
         """Route to appropriate model tier."""
-        haiku_tasks = {"triage", "routing", "structure_repair", "schema_learning", 
-                       "classification", "simple_extraction"}
-        return self.haiku if task_type in haiku_tasks else self.sonnet
+        fast_tasks = {"triage", "routing", "structure_repair", "schema_learning", 
+                      "classification", "simple_extraction"}
+        return settings.OPENAI_MODEL_FAST if task_type in fast_tasks else settings.OPENAI_MODEL_STRONG
     
     async def complete(self, task_type: str, prompt: str, system: str = None, 
-                       temperature: float = 0.0, **kwargs) -> str:
+                       temperature: float = 0.0, max_tokens: int = 4096) -> str:
         # 1. Redact PII from prompt
         clean_prompt = self.pii_redactor.redact(prompt)
+        clean_system = self.pii_redactor.redact(system) if system else None
         # 2. Check cache
-        cache_key = self._cache_key(task_type, clean_prompt, system, temperature)
+        model = self._route_model(task_type)
+        cache_key = self._cache_key(model, clean_prompt, clean_system, temperature)
         if cached := self.cache.get(cache_key):
             return cached
         # 3. Call model
-        model = self.route(task_type)
+        response = await self.client.chat.completions.create(
+            model=model,
+            messages=[{"role": "system", "content": clean_system}, {"role": "user", "content": clean_prompt}],
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        content = response.choices[0].message.content if response.choices else ""
+        # 4. Cache and return
+        self.cache.set(cache_key, content)
+        return content
         response = await model.complete(clean_prompt, system, temperature, **kwargs)
         # 4. Log & cache
         self.call_log.log(task_type, clean_prompt, response)

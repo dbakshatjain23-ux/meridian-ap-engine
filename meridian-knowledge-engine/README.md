@@ -67,7 +67,7 @@ A production-grade platform that ingests documents, emails, meetings, and chats 
 git clone <repo> meridian-knowledge-engine
 cd meridian-knowledge-engine
 cp .env.example .env.local
-# Edit .env.local with ANTHROPIC_API_KEY
+# Edit .env.local with OPENAI_API_KEY
 
 # 2. Start local stack
 docker-compose up -d

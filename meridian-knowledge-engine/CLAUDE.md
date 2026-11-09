@@ -118,7 +118,7 @@ docker-compose exec api mypy app/
 ## Environment Variables (Required)
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...           # Required
+OPENAI_API_KEY=sk-...                  # Required
 DATABASE_URL=postgresql://...           # Neon or local
 JWT_SECRET_KEY=...                      # 64+ chars
 REDIS_URL=redis://localhost:6379        # Local Redis
