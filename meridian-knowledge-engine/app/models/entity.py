@@ -2,9 +2,10 @@
 """Entity model - Domain objects: Client, Vendor, Policy, Invoice, Regulation, Person."""
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import DateTime, String, Text, ForeignKey, Index, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -17,6 +18,7 @@ class Entity(Base):
     __tablename__ = "entities"
     __table_args__ = (
         Index("ix_entities_tenant", "tenant_id"),
+        Index("ix_entities_embedding", "embedding", postgresql_using="hnsw", postgresql_with={"m": 16, "ef_construction": 64}),
         UniqueConstraint("tenant_id", "entity_type", "canonical_name", name="uq_entities_tenant_type_canonical"),
         {"schema": "public"},
     )
@@ -40,6 +42,7 @@ class Entity(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     canonical_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    embedding: Mapped[Optional[List[float]]] = mapped_column(Vector(384), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
