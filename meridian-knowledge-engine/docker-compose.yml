@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: meridian-postgres
+    environment:
+      POSTGRES_DB: meridian
+      POSTGRES_USER: meridian
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meridian}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meridian -d meridian"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and pub/sub
+  redis:
+    image: redis:7-alpine
+    container_name: meridian-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Main API Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meridian-api
+    environment:
+      DATABASE_URL: postgresql+asyncpg://meridian:${POSTGRES_PASSWORD:-meridian}@postgres:5432/meridian
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: gpt-4o-mini
+      EMBEDDING_MODEL: text-embedding-3-small
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Ingestion Worker
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meridian-worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://meridian:${POSTGRES_PASSWORD:-meridian}@postgres:5432/meridian
+      REDIS_URL: redis://redis:6379/0
+      WORKER_ID: worker-1
+      JOB_TYPES: ingest,email_ingest,teams_ingest,meeting_ingest
+      POLL_INTERVAL: 5.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    command: python -m app.workers.ingestion_worker
+
+  # Meeting Bot (optional - for audio processing)
+  meeting-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.meeting
+    container_name: meridian-meeting-bot
+    environment:
+      DATABASE_URL: postgresql+asyncpg://meridian:${POSTGRES_PASSWORD:-meridian}@postgres:5432/meridian
+      REDIS_URL: redis://redis:6379/0
+      HF_TOKEN: ${HF_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - recordings:/app/recordings
+    # GPU support for faster-whisper and pyannote
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Nginx Reverse Proxy (for production)
+  nginx:
+    image: nginx:alpine
+    container_name: meridian-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:
+  recordings:

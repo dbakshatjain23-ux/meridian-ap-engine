@@ -1,0 +1,48 @@
+# Dockerfile.meeting - Meeting Bot with GPU support
+FROM nvidia/cuda:12.2-runtime-ubuntu22.04
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    build-essential \
+    libpq-dev \
+    libmagic1 \
+    ffmpeg \
+    libsndfile1 \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
+
+# Set working directory
+WORKDIR /app
+
+# Install PyTorch with CUDA support first
+RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install meeting-specific dependencies
+RUN pip install --no-cache-dir \
+    faster-whisper \
+    pyannote.audio \
+    onnxruntime-gpu
+
+# Copy application
+COPY app/ ./app/
+
+# Create recordings directory
+RUN mkdir -p /app/recordings
+
+# Run meeting bot service
+CMD ["python", "-m", "app.workers.meeting_bot_worker"]
