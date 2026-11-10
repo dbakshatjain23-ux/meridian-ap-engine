@@ -12,7 +12,7 @@ class CalculatorRouter:
     CALCULATOR_KEYWORDS = {
         "calculate_price_variance": [
             "price tolerance", "price variance", "price difference",
-            "price variation", "excess price", "price exceed",
+            "price variation", "excess price", "price exceed", "variance",
         ],
         "classify_tds": [
             "tds section", "which section", "classify tds",

@@ -10,6 +10,7 @@ from app.models.conflict import Conflict
 from app.models.job import Job
 from app.models.answer_log import AnswerLog
 from app.models.user import User
+from app.models.escalation import Escalation
 
 __all__ = [
     "Tenant",
@@ -21,4 +22,5 @@ __all__ = [
     "Job",
     "AnswerLog",
     "User",
+    "Escalation",
 ]
